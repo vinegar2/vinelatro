@@ -15,3 +15,11 @@ void Player::orderHand() {
 string Player::getStr() {
     return currentHand.strHand();
 }
+
+void Player::updateScore(Hand& hand) {
+    score += hand.calculateHandScore();
+}
+
+void Player::resetScore() {
+    score = 0;
+}

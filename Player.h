@@ -18,6 +18,9 @@ class Player
         void orderHand();
         string getStr();
 
+        void updateScore(Hand& hand);
+        void resetScore();
+
 };
   
 

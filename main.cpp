@@ -5,37 +5,81 @@
 #include <iostream>
 using namespace std;
 
+void printHandType(Hand& hand) {
+  switch (hand.getHandType()) {
+    case Hand::straight_flush: 
+      cout << "Straight flush?!?! EaauaghuhH??" << endl;
+      break;
+    case Hand::four:
+      cout << "Four of a kind!" << endl;
+      break;
+    case Hand::full_house:
+      cout << "Full House!" << endl;
+      break;
+    case Hand::flush:
+      cout << "Flush!" << endl;
+      break;
+    case Hand::straight:
+      cout << "Straight!" << endl;
+      break;
+    case Hand::three:
+      cout << "Three of a Kind!" << endl;
+      break;
+    case Hand::two_pair:
+      cout << "Two Pair!" << endl;
+      break;
+    case Hand::pair:
+      cout << "Pair!" << endl;
+      break;
+    case Hand::high:
+      cout << "High Card!" << endl;
+      break;
+    case Hand::nothing:
+      cout << "Absolutely nothing." << endl;
+      break;
+    default:
+      cout << "What the fuck did you do" << endl;
+      break;
+  }
+}
+
 int main() {
   Deck deck;
-  
-
-
   Player you;
+  Hand tempHand;
 
 // Mrs. Griffin, what are your plans for cleaning up our environment?
   bool gameing = true;
+  int scoreGoal = 0;
 
   while (gameing) {
+
     you.clearHand();
     Deck tempDeck = deck;
     tempDeck.shuffle();
     you.setHand(tempDeck, 7);
 
     you.orderHand();
-    cout << you.getStr() << endl;
-
-    cout << "Select up to 5 of your cards, or input 0 to send it: " << flush;
-
-    Hand tempHand;
 
     bool running = true;
+    bool sent = false;
+    bool read = false;
+    bool outOfCards = false;
     int cardsPlayed = 0;
     int playLimit = 5;
+    scoreGoal += 300;
 
     while (running) {
+      cout << you.getStr() << endl;
+      if (!read) {
+        cout << "Select up to 5 of your cards, or input 0 to send it." << endl;
+        read = true;
+      }
 
       if (tempHand.getHandSize() == 0 && you.currentHand.getHandSize() == 0) {
         cout << "You have NONE CARDS" << endl;
+        outOfCards = true;
+        running = false;
         break;
       }
 
@@ -59,7 +103,7 @@ int main() {
           cardsPlayed = tempHand.getHandSize();
 
           cout << "Selected Card(s):\n" << tempHand.strHand() << endl;
-          cout << "Remaining Card(s):\n" << you.getStr() << "\n" << endl;
+          cout << "Remaining Card(s):" << endl;
         } else {
           cout << "That's not a card you have!" << endl;
         }
@@ -88,12 +132,10 @@ int main() {
 
             you.orderHand();
 
-            cout << you.getStr() << endl;
-            cout << "Select up to 5 of your cards, or input 0 to send it: " << flush;
           } 
 
-          else {          
-            running = false;
+          else {         
+            sent = true;
           }
 
         } 
@@ -104,8 +146,6 @@ int main() {
 
           you.orderHand();
 
-          cout << you.getStr() << endl;
-          cout << "Select up to 5 of your cards, or input 0 to send it: " << flush;
 
         }
         else if (choice2 == 3) {
@@ -114,55 +154,32 @@ int main() {
 
           you.orderHand();
 
-          cout << you.getStr() << endl;
-          cout << "Select up to 5 of your cards, or input 0 to send it: " << flush;
         }
 
 
       }
+      if (sent) {
+        printHandType(tempHand);
+        you.updateScore(tempHand);
+        cout << "\nYour hand scored: " << tempHand.calculateHandScore() << " points." << endl;
+        cout << "Target score: " << scoreGoal << endl;
+        cout << "Current score: " << you.score << "\n" << endl;
+
+        tempHand.empty();
+        you.currentHand.fillHand(tempDeck, 7);
+
+        if (you.score >= scoreGoal) {
+          you.resetScore();
+          running = false;
+        }
+        sent = false;
+      }
 
     }
-    cout << "\n" << flush;
-
-    switch (tempHand.getHandType()) {
-      case Hand::straight_flush: 
-        cout << "Straight flush?!?! EaauaghuhH??" << endl;
-        break;
-      case Hand::four:
-        cout << "Four of a kind!" << endl;
-        break;
-      case Hand::full_house:
-        cout << "Full House!" << endl;
-        break;
-      case Hand::flush:
-        cout << "Flush!" << endl;
-        break;
-      case Hand::straight:
-        cout << "Straight!" << endl;
-        break;
-      case Hand::three:
-        cout << "Three of a Kind!" << endl;
-        break;
-      case Hand::two_pair:
-        cout << "Two Pair!" << endl;
-        break;
-      case Hand::pair:
-        cout << "Pair!" << endl;
-        break;
-      case Hand::high:
-        cout << "High Card!" << endl;
-        break;
-      case Hand::nothing:
-        cout << "Absolutely nothing." << endl;
-        break;
-      default:
-        cout << "What the fuck did you do" << endl;
-        break;
+    if (outOfCards) {
+      scoreGoal = 0;
+      cout << "You ran out of cards. Womp womp." << endl;
     }
-
-    cout << "\nYour hand scored: " << tempHand.calculateHandScore() << " points." << endl;
-
-
 
     cout << "\nAgain? (y/n) " << flush;
     char againAGAIN;
