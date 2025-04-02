@@ -22,6 +22,10 @@ class Deck
         int getDeckSize();
         void addCard(Card card);
 
+        void removeCard(Card& card);
+
+        
+
 };
   
 

@@ -4,6 +4,7 @@ using namespace std;
 Hand::Hand() {
 //  Ensuring it's empty
     hand.clear();
+    jokers.clear();
 }
 
 Hand::Hand(Deck& deck, int N) {
@@ -66,6 +67,22 @@ void Hand::empty() {
 
 void Hand::order() {
     sort(hand.begin(), hand.end());
+}
+
+void Hand::addJokers(vector<Joker>& jokers) {
+    this->jokers.clear();
+    for (int i = 0; i < (int)jokers.size(); i++) {
+        this->jokers.push_back(jokers.at(i));
+    }
+}
+bool Hand::hasJoker(Joker::Type type) {
+    bool hasJoker = false;
+    for (int i = 0; i < (int)jokers.size(); i++) {
+        if (jokers.at(i).getType() == type) {
+            hasJoker = true;
+        }
+    }
+    return hasJoker;
 }
 
 bool Hand::hasPair() {
@@ -136,6 +153,52 @@ bool Hand::isStraight() {
         }
         order();
         return good;
+    }
+}
+
+bool Hand::isPartOfThree(Card& card) {
+    if ((int)hand.size() < 3) {
+        return false;
+    } else {
+        int pairs = 0;
+        for (int i = 0; i < (int)hand.size(); i++) {
+            if (isPair(hand.at(i), card)) {
+                pairs += 1;
+            }
+        }
+        if (pairs >= 3) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+bool Hand::isPartOfFour(Card& card) {
+    if ((int)hand.size() < 4) {
+        return false;
+    } else {
+        int pairs = 0;
+        for (int i = 0; i < (int)hand.size(); i++) {
+            if (isPair(hand.at(i), card)) {
+                pairs += 1;
+            }
+        }
+        if (pairs >= 4) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+bool Hand::isFace(Card& card) {
+    if (hasJoker(Joker::oops_all_face)) {
+        return true;
+    } else if (card.getRank() >= 11 || card.getRank() <= 13) {
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -226,13 +289,13 @@ Hand::HandType Hand::getHandType() {
             for (int i = 0; i < (int)tempHand.hand.size(); i++) {
                 bool willBeKilled = true;
                 for (int j = 0; j < (int)tempHand.hand.size(); j++) {
-                    if (tempHand.hand.at(i) != tempHand.hand.at(j)) {
+                    if (i != j) {
                         if (isPair(tempHand.hand.at(i), tempHand.hand.at(j))) {
                             willBeKilled = false;
                         }
                     }
                 }
-                if (willBeKilled == true) {
+                if (willBeKilled) {
                     tempHand.hand.erase(tempHand.hand.begin() + i);
                 }
             }
@@ -262,8 +325,12 @@ Hand::HandType Hand::getHandType() {
     return nothing;
 }
 
-int Hand::calculateHandScore() {
-    int score = 0, mult = 0;
+float Hand::calculateHandScore() {
+    int score = 0;
+    float mult = 0;
+
+//  If you have splash, then the parts that erase cards are ignored
+    bool ignore = hasJoker(Joker::splash);
 
     switch (getHandType()) {
         case straight_flush:
@@ -273,6 +340,15 @@ int Hand::calculateHandScore() {
         case four:
             score += 60;
             mult += 7;
+            if (!ignore) {
+                while ((int)hand.size() > 4) {
+                    for (int i = 0; i < (int)hand.size(); i++) {
+                        if (!isPartOfFour(hand.at(i))) {
+                            hand.erase(hand.begin() + i);
+                        }
+                    }
+                }
+            }
             break;
         case full_house:
             score += 40;
@@ -289,27 +365,126 @@ int Hand::calculateHandScore() {
         case three:
             score += 30;
             mult += 3;
+            if (!ignore) {
+                while ((int)hand.size() > 3) {
+                    for (int i = 0; i < (int)hand.size(); i++) {
+                        if (!isPartOfThree(hand.at(i))) {
+                            hand.erase(hand.begin() + i);
+                        }
+                    }
+                }
+            }
             break;
         case two_pair:
             score += 20;
             mult += 2;
+            if (!ignore) {
+                while ((int)hand.size() > 4) {
+                    for (int i = 0; i < (int)hand.size(); i++) {
+                        bool willBeKilled = true;
+                        for (int j = 0; j < (int)hand.size(); j++) {
+                            if (i != j) {
+                                if (isPair(hand.at(i), hand.at(j))) {
+                                    willBeKilled = false;
+                                }
+                            }
+                        }
+                        if (willBeKilled) {
+                            hand.erase(hand.begin() + i);
+                        }
+                    }
+                }
+            }
             break;
         case pair:
             score += 10;
             mult += 2;
+            if (!ignore) {
+                while ((int)hand.size() > 2) {
+                    for (int i = 0; i < (int)hand.size(); i++) {
+                        bool willBeKilled = true;
+                        for (int j = 0; j < (int)hand.size(); j++) {
+                            if (i != j) {
+                                if (isPair(hand.at(i), hand.at(j))) {
+                                    willBeKilled = false;
+                                }
+                            }
+                        }
+                        if (willBeKilled) {
+                            hand.erase(hand.begin() + i);
+                        }
+                    }
+                }
+            }
             break;
         case high:
             score += 5;
             mult += 1;
+            if (!ignore) {
+                while ((int)hand.size() > 1) {
+                    hand.erase(hand.begin());
+                }
+            }
             break;
         default:
             break;
     }
 
+
     for (int i = 0; i < getHandSize(); i++) {
         score += hand.at(i).getValue();
+        score += calcExtraScore(i);
+        mult += calcExtraMult(i);
+        mult *= calcMultMult(i);
     }
 
 
-    return score * mult;
+    return (float)score * mult;
 }
+
+int Hand::calcExtraScore(int i) {
+    int bonusScore = 0;
+
+    if (hasJoker(Joker::odd_score)) {
+        if (hand.at(i).isOdd()) {
+            bonusScore += 31;
+        }
+    }
+
+
+    return bonusScore;
+}
+
+int Hand::calcExtraMult(int i) {
+    int bonusMult = 0;
+
+    if (hasJoker(Joker::even_mult)) {
+        if (hand.at(i).isEven()) {
+            bonusMult += 4;
+        }
+    }
+    if (hasJoker(Joker::face_mult)) {
+        if (isFace(hand.at(i))) {
+            bonusMult += 5;
+        }
+    }
+
+
+    return bonusMult;
+}
+
+float Hand::calcMultMult(int i) {
+    int multMult = 0;
+
+    if (hasJoker(Joker::kq_mult)) {
+        if (hand.at(i).getRank() == 12 || hand.at(i).getRank() == 13) {
+            multMult += 2;
+        }
+    }
+
+    if (multMult == 0) {
+        multMult += 1;
+    }
+    return multMult;
+}
+

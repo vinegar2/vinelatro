@@ -45,3 +45,13 @@ int Deck::getDeckSize() {
 void Deck::addCard(Card card) {
     deck.push_back(card);
 }
+
+
+//  Works very nicely :3
+void Deck::removeCard(Card& card) {
+    for (int i = 0; i < (int)deck.size(); i++) {
+        if (deck.at(i).getID() == card.getID()) {
+            deck.erase(deck.begin() + i);
+        }
+    }
+}

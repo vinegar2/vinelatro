@@ -96,3 +96,19 @@ string Card::getTitle() {
 int Card::getID() {
     return id;
 }
+
+bool Card::isOdd() {
+    if (rank % 2 == 1 && rank < 11) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool Card::isEven() {
+    if (!isOdd() && rank < 11) {
+        return true;
+    } else {
+        return false;
+    }
+}

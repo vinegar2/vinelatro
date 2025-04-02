@@ -25,6 +25,11 @@ class Card
         bool operator== (const Card& rhs);
         bool operator!= (const Card& rhs);
 
+        bool isOdd();
+        bool isEven();
+
+
+
         static int nextId;
 
     private: 
