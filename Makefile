@@ -1,7 +1,6 @@
 CXX = g++
 OPTIONS = -Wall
-PROGRAM = main.out
-TEST = test.out
+PROGRAM = main.exe
 
 all: $(PROGRAM)
 
