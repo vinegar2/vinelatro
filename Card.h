@@ -9,9 +9,11 @@ class Card
 {
     public: 
         enum Suit {club, heart, spade, diamond, MYSTERY};
+        enum Tag {none, red };
 
         Card();
         Card(int rank, Suit suit);
+        Card(const Card& original);
 
         string strCard();
 
@@ -20,6 +22,8 @@ class Card
         int getValue();
         string getTitle();
         int getID();
+
+        void setRank(int i);
         
         bool operator< (const Card& rhs);
         bool operator== (const Card& rhs);
@@ -27,6 +31,28 @@ class Card
 
         bool isOdd();
         bool isEven();
+
+        int getMult();
+
+        void addMult(int i);
+
+        void disable();
+        void enable();
+        bool isEnabled();
+
+        
+        bool toBeSwapped = false;
+        void readyToSwap();
+        void swapped();
+
+        Tag getTag();
+        void setTag(Tag tag);
+
+        void rankValue(int i);
+        void addBonus(int i);
+
+        
+
 
 
 
@@ -37,7 +63,11 @@ class Card
         int rank = 0;
         Suit suit = club;
         int value = 0;
+        int bonus = 0;
+        int mult = 0;
         int id = 0;
+        bool enabled = true;
+        Tag tag = none;
 
 };
   

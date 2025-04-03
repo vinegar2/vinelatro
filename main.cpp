@@ -54,6 +54,7 @@ int main() {
   JokerPool pool;
   random_device randy;
 
+
 // Mrs. Griffin, what are your plans for cleaning up our environment?
   bool gameing = true;
   float scoreGoal = 0;
@@ -140,6 +141,7 @@ int main() {
         if (input.at(0) == 'h') {
           valid = true;
           you.score += scoreGoal;
+          you.giveMuns(50);
           input.at(0) = 's';
         }
 
@@ -238,12 +240,22 @@ int main() {
 
 //  Now finally, if it's time to send it, we send it.
         if (sent) {
-          float scored = tempHand.calculateHandScore();
+          bool modified = false;
           printHandType(tempHand);
+          float scored = tempHand.calculateHandScore(modified, you.muns, you.discardsCap - you.discardsUsed, you.handsCap - you.handsPlayed, you.currentHand);
           you.updateScore(scored);
           cout << "Your hand scored: " << scored << " points." << endl;
           cout << "Target score: " << scoreGoal << endl;
           cout << "Current score: " << you.score << "\n" << endl;
+
+          if (modified) { // Will only trigger if a Joker modified at least one of your cards
+            for (int i = 0; i < tempHand.getHandSize(); i++) {
+              if (tempHand.swapping(i)) {
+                Card tempCard = tempHand.getCard(i);
+                deck.swapCard(tempCard);
+              }
+            }
+          }
 
           tempHand.empty();
           sent = false;
@@ -265,7 +277,7 @@ int main() {
     }
 
     you.giveMuns(you.handsCap - you.handsPlayed);
-    you.giveMuns(rounds * 2);
+    you.giveMuns(4);
     
 
     bool shopLoop = true;
@@ -323,10 +335,14 @@ int main() {
           cout << "You don't have enough money!" << endl;
         } else {
           if (shop.at(choice).getItemType() == ShopItem::joker) {
-            Joker tempJoker = shop.at(choice).getJoker();
-            you.addJoker(tempJoker);
-            you.takeMuns(shop.at(choice).getPrice());
-            shop.erase(shop.begin() + choice);
+            if (!you.hasJokerRoom()) {
+              cout << "You don't have enough space!" << endl;
+            } else {
+              Joker tempJoker = shop.at(choice).getJoker();
+              you.addJoker(tempJoker);
+              you.takeMuns(shop.at(choice).getPrice());
+              shop.erase(shop.begin() + choice);
+            }
           }
         } 
       }

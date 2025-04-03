@@ -5,7 +5,7 @@ using namespace std;
 JokerPool::JokerPool() {
     Joker tempJoker;
 
-    for (int i = 1; i <= 7; i++) {
+    for (int i = static_cast<int>(Joker::splash); i < static_cast<int>(Joker::FINAL); i++) {
         tempJoker.intType(i);
         if (tempJoker.getType() < Joker::oops_all_face) {
             tempJoker.intRarity(1);

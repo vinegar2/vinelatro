@@ -46,3 +46,11 @@ bool Player::hasJoker(Joker& joker) {
     }
     return false;
 }
+
+bool Player::hasJokerRoom() {
+    if ((int)jokers.size() < jokerCap) {
+        return true;
+    } else {
+        return false;
+    }
+}

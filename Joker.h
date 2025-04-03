@@ -7,13 +7,29 @@ class Joker {
     public: 
         enum Type { 
             no_type,
-            splash,
+            splash, // First common
+            jimbo,
             odd_score,
             even_mult,
-            face_mult,
-            oops_all_face,
-            k_hand_mult,
-            kq_mult,
+            face_mult, 
+            face_score,
+            no_discard_mult,
+            money_chips,
+            club_mult,
+            heart_mult,
+            spade_mult,
+            diamond_mult,
+            random_mult,
+            oops_all_face, // First uncommon
+            hack,
+            no_e_bonus,
+            fibonacci,
+            perma_score,
+            k_hand_mult, // First rare
+            jack_to_queen,
+            uncommon_xmult,
+            kq_mult, // First special
+            FINAL   // Final joker type = do not create!
         };
         enum Rarity {
             no_rarity,
@@ -44,9 +60,13 @@ class Joker {
         void unavailable();
         void available();
 
+        int getValue();
+        void setValue();
+
     private:
         Type type;    
         Rarity rarity;
+        int value = -1;
 
 };
 

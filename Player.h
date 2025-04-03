@@ -34,6 +34,7 @@ class Player
 
         void addJoker(Joker& joker);
         bool hasJoker(Joker& joker);
+        bool hasJokerRoom();
 
         vector<Joker> jokers;
 

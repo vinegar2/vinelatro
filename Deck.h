@@ -20,9 +20,12 @@ class Deck
         void shuffle();
         Card drawCard();
         int getDeckSize();
-        void addCard(Card card);
 
+
+        void addCard(Card& card);
         void removeCard(Card& card);
+
+        void swapCard(Card& card);
 
         
 

@@ -10,23 +10,7 @@ int ShopItem::getPrice() {
 }
 void ShopItem::setPrice() {
     if (type == itemType::joker) {
-        switch(shopJoker.getRarity()) {
-            case Joker::common:
-                this->price = 2;
-                break;
-            case Joker::uncommon:
-                this->price = 4;
-                break;
-            case Joker::rare:
-                this->price = 7;
-                break;
-            case Joker::special:
-                this->price = 15;
-                break;
-            default:
-                this->price = -1;
-                break;
-        }
+        this->price = shopJoker.getValue();
     }
 }
 

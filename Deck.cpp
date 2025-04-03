@@ -42,7 +42,7 @@ int Deck::getDeckSize() {
     return deck.size();
 }
 
-void Deck::addCard(Card card) {
+void Deck::addCard(Card& card) {
     deck.push_back(card);
 }
 
@@ -52,6 +52,15 @@ void Deck::removeCard(Card& card) {
     for (int i = 0; i < (int)deck.size(); i++) {
         if (deck.at(i).getID() == card.getID()) {
             deck.erase(deck.begin() + i);
+        }
+    }
+}
+
+void Deck::swapCard(Card& card) {
+    for (int i = 0; i < (int)deck.size(); i++) {
+        if (deck.at(i).getID() == card.getID()) {
+            deck.at(i) = card;
+            deck.at(i).swapped();
         }
     }
 }

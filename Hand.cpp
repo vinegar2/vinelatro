@@ -195,7 +195,7 @@ bool Hand::isPartOfFour(Card& card) {
 bool Hand::isFace(Card& card) {
     if (hasJoker(Joker::oops_all_face)) {
         return true;
-    } else if (card.getRank() >= 11 || card.getRank() <= 13) {
+    } else if (card.getRank() >= 11 && card.getRank() <= 13) {
         return true;
     } else {
         return false;
@@ -325,7 +325,7 @@ Hand::HandType Hand::getHandType() {
     return nothing;
 }
 
-float Hand::calculateHandScore() {
+float Hand::calculateHandScore(bool& modified, int& money, int discards, int handsRemaining, Hand& remainingHand) {
     int score = 0;
     float mult = 0;
 
@@ -341,10 +341,10 @@ float Hand::calculateHandScore() {
             score += 60;
             mult += 7;
             if (!ignore) {
-                while ((int)hand.size() > 4) {
+                if ((int)hand.size() > 4) {
                     for (int i = 0; i < (int)hand.size(); i++) {
                         if (!isPartOfFour(hand.at(i))) {
-                            hand.erase(hand.begin() + i);
+                            hand.at(i).disable();
                         }
                     }
                 }
@@ -366,10 +366,10 @@ float Hand::calculateHandScore() {
             score += 30;
             mult += 3;
             if (!ignore) {
-                while ((int)hand.size() > 3) {
+                if ((int)hand.size() > 3) {
                     for (int i = 0; i < (int)hand.size(); i++) {
                         if (!isPartOfThree(hand.at(i))) {
-                            hand.erase(hand.begin() + i);
+                            hand.at(i).disable();
                         }
                     }
                 }
@@ -379,18 +379,18 @@ float Hand::calculateHandScore() {
             score += 20;
             mult += 2;
             if (!ignore) {
-                while ((int)hand.size() > 4) {
+                if ((int)hand.size() > 4) {
                     for (int i = 0; i < (int)hand.size(); i++) {
-                        bool willBeKilled = true;
+                        bool toDisable = true;
                         for (int j = 0; j < (int)hand.size(); j++) {
                             if (i != j) {
                                 if (isPair(hand.at(i), hand.at(j))) {
-                                    willBeKilled = false;
+                                    toDisable = false;
                                 }
                             }
                         }
-                        if (willBeKilled) {
-                            hand.erase(hand.begin() + i);
+                        if (toDisable) {
+                            hand.at(i).disable();
                         }
                     }
                 }
@@ -400,18 +400,18 @@ float Hand::calculateHandScore() {
             score += 10;
             mult += 2;
             if (!ignore) {
-                while ((int)hand.size() > 2) {
+                if ((int)hand.size() > 2) {
                     for (int i = 0; i < (int)hand.size(); i++) {
-                        bool willBeKilled = true;
+                        bool toDisable = true;
                         for (int j = 0; j < (int)hand.size(); j++) {
                             if (i != j) {
                                 if (isPair(hand.at(i), hand.at(j))) {
-                                    willBeKilled = false;
+                                    toDisable = false;
                                 }
                             }
                         }
-                        if (willBeKilled) {
-                            hand.erase(hand.begin() + i);
+                        if (toDisable) {
+                            hand.at(i).disable();
                         }
                     }
                 }
@@ -421,8 +421,8 @@ float Hand::calculateHandScore() {
             score += 5;
             mult += 1;
             if (!ignore) {
-                while ((int)hand.size() > 1) {
-                    hand.erase(hand.begin());
+                for (int i = 0; i < (int)hand.size() - 1; i++) {
+                    hand.at(i).disable();
                 }
             }
             break;
@@ -432,14 +432,96 @@ float Hand::calculateHandScore() {
 
 
     for (int i = 0; i < getHandSize(); i++) {
-        score += hand.at(i).getValue();
-        score += calcExtraScore(i);
-        mult += calcExtraMult(i);
-        mult *= calcMultMult(i);
+        if (hand.at(i).isEnabled()) {
+            score += hand.at(i).getValue();
+            score += calcExtraScore(i);
+            mult += calcExtraMult(i);
+            mult *= calcMultMult(i);
+            playHandModify(i, modified);
+
+            extraPlays(i, score, mult, modified);
+
+            hand.at(i).enable();
+        }
     }
+    additionalScore(score, money);
+    additionalMult(mult, discards);
+    additionalMultMult(mult, remainingHand);
 
 
     return (float)score * mult;
+}
+
+void Hand::additionalScore(int& score, int& money) {
+
+    if (hasJoker(Joker::money_chips)) {
+        score += 2 * money;
+    }
+
+}
+
+void Hand::additionalMult(float& mult, int& discards) {
+
+    if (hasJoker(Joker::no_discard_mult)) {
+        if (discards == 0) {
+            mult += 15;
+        }
+    }
+    if (hasJoker(Joker::random_mult)) {
+        random_device randall;
+        mult += (randall() % 24);
+    }
+
+}
+
+void Hand::additionalMultMult(float& mult, Hand& remainingHand) {
+
+    if (hasJoker(Joker::uncommon_xmult)) {
+        for (int i = 0; i < (int)jokers.size(); i++) {
+            if (jokers.at(i).getRarity() == Joker::uncommon) {
+                mult *= 1.5;
+            }
+        }
+    }
+
+    if (hasJoker(Joker::k_hand_mult)) {
+        for (int i = 0; i < remainingHand.getHandSize(); i++) {
+            if (remainingHand.hand.at(i).getRank() == 13) {
+                mult *= 1.5;
+            }
+        }        
+    }
+
+}
+
+void Hand::extraPlays(int CardNo, int& score, float& mult, bool& modified) {
+    if (hand.at(CardNo).isEnabled()) {
+        int j = 0;
+        if (hand.at(CardNo).getTag() == Card::red) {
+            j += 1;
+        }
+        if (hasJoker(Joker::no_e_bonus)) {
+            int l = hand.at(CardNo).getRank();  // I'mma be so fr this is just to save me time having to type that shit out
+            if ((l == 2 || l == 4 || l == 6 || l == 11 || l == 13) && (hand.at(CardNo).getSuit() != Card::spade && hand.at(CardNo).getSuit() != Card::heart)) {
+                j += 2;
+            }
+        }
+        if (hasJoker(Joker::hack)) {
+            if (hand.at(CardNo).getRank() >= 2 && hand.at(CardNo).getRank() <= 5) {
+                j += 1;
+            }
+        }
+
+
+        for (int i = 0; i < j; i++) {
+            score += hand.at(CardNo).getValue();
+            score += calcExtraScore(CardNo);
+            mult += calcExtraMult(CardNo);
+            mult *= calcMultMult(CardNo);
+            playHandModify(CardNo, modified);
+        }
+
+    }
 }
 
 int Hand::calcExtraScore(int i) {
@@ -468,6 +550,32 @@ int Hand::calcExtraMult(int i) {
             bonusMult += 5;
         }
     }
+    if (hasJoker(Joker::fibonacci)) {
+        int j = hand.at(i).getRank();
+        if (j == 1 || j == 2 || j == 3 || j == 5 || j == 8) {
+            bonusMult += 8;
+        }
+    }
+    if (hasJoker(Joker::club_mult)) {
+        if (hand.at(i).getSuit() == Card::club) {
+            bonusMult += 3;
+        }
+    }
+    if (hasJoker(Joker::heart_mult)) {
+        if (hand.at(i).getSuit() == Card::heart) {
+            bonusMult += 3;
+        }
+    }
+    if (hasJoker(Joker::spade_mult)) {
+        if (hand.at(i).getSuit() == Card::spade) {
+            bonusMult += 3;
+        }
+    }
+    if (hasJoker(Joker::diamond_mult)) {
+        if (hand.at(i).getSuit() == Card::diamond) {
+            bonusMult += 3;
+        }
+    }
 
 
     return bonusMult;
@@ -488,3 +596,36 @@ float Hand::calcMultMult(int i) {
     return multMult;
 }
 
+void Hand::playHandModify(int i, bool& modified) {
+    if (hand.at(i).isEnabled()) {
+//  Forcefemming Jacks
+        if (hasJoker(Joker::jack_to_queen)) {
+            if (hand.at(i).getRank() != 12 && isFace(hand.at(i))) {
+                if (hand.at(i).getTag() != Card::red) { // Handling edge case for if the card already has a red tag
+                    hand.at(i).disable();
+                }
+                hand.at(i).setRank(12);
+                hand.at(i).setTag(Card::red);
+                hand.at(i).readyToSwap();
+                modified = true;
+            }
+        }
+//  Hiker (I buffed him btw because I LOVE HIKER WOOOOO)
+        if (hasJoker(Joker::perma_score)) {
+            hand.at(i).addBonus(10);
+        }
+
+    }
+}
+
+bool Hand::swapping(int i) {
+    if (hand.at(i).toBeSwapped) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+Card Hand::getCard(int i) {
+    return hand.at(i);
+}
